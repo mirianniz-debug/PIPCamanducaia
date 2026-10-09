@@ -149,6 +149,8 @@
   .pop-h{font:600 10px 'IBM Plex Mono',monospace;color:#48555d;text-transform:uppercase;letter-spacing:.09em;margin:10px 0 4px;}
   .pop-list{margin:0;padding-left:16px;font-size:12px;line-height:1.45;color:#16232e;}
   .pop-list li{margin:2px 0;}
+  .pop-src{margin-top:10px;font:400 10.5px/1.4 'Inter',sans-serif;color:#48555d;}
+  .pop-src span{font-family:'IBM Plex Mono',monospace;word-break:break-all;}
   .pop-warn{margin-top:10px;padding:7px 9px;border-radius:7px;background:#fff4dc;border:1px solid #ecd49a;font-size:11px;line-height:1.4;color:#5b4310;}
   .pip-label{background:rgba(22,35,46,.86);color:#fff;border:0;font:600 10px 'IBM Plex Mono',monospace;padding:1px 5px;border-radius:4px;box-shadow:none;}
   .pip-label::before{display:none;}
@@ -272,7 +274,7 @@
         <div class="pillar-text"><strong>Saneamento rural</strong>
           <span>Fossa séptica biodigestora e sistema de filtragem e cloração da água para abastecimento doméstico.</span></div>
       </div>
-      <p class="about-note"><strong>Fontes:</strong> PIPs elaborados pela Aplicar Engenharia (2023/2024); limites dos imóveis do Cadastro Ambiental Rural (SICAR); hidrografia e APP do Programa Bacias Jaguariúna. As áreas informadas são as declaradas nos PIPs.</p>
+      <p class="about-note"><strong>Fontes:</strong> PIPs elaborados pela Aplicar Engenharia (2023/2024); limites dos imóveis do Cadastro Ambiental Rural (SICAR) e, nos PIPs 07, 14, 17 e 20, do KML do edital; hidrografia e APP do Programa Bacias Jaguariúna. As áreas informadas são as declaradas nos PIPs.</p>
     </div>
     <div class="about-foot"><button id="aboutGotIt">Explorar o mapa</button></div>
   </div>
@@ -309,7 +311,7 @@
     <div id="layerList"></div>
 
     <button id="fitBtn" type="button">⤢ Ajustar às propriedades</button>
-    <div class="sources">Fontes: PIPs (Aplicar Engenharia, 2023/2024) · Limites dos imóveis: SICAR · Hidrografia e APP: Programa Bacias Jaguariúna · Área de interesse: Edital PCJ 2018</div>
+    <div class="sources">Fontes: PIPs (Aplicar Engenharia, 2023/2024) · Limites dos imóveis: SICAR e KML do edital · Hidrografia e APP: Programa Bacias Jaguariúna · Área de interesse: Edital PCJ 2018</div>
   </aside>
 
   <div id="map">
@@ -434,7 +436,8 @@ function start(PROP, CTX){
       + '<div class="pop-h">Ações previstas · restauração e conservação</div><ul class="pop-list">'+rest+'</ul>'
       + '<div class="pop-h">Ações previstas · saneamento rural</div>'
       + (san ? '<ul class="pop-list">'+san+'</ul>' : '<div style="font-size:12px;color:#48555d">Não previsto</div>')
-      + warn;
+      + warn
+      + (p.limite_fonte && p.limite_fonte !== 'SICAR' ? '<div class="pop-src">Limite do imóvel conforme o KML do Edital PCJ 2018 (CAR <span>'+esc(p.limite_car)+'</span>), compatível com a área do PIP.</div>' : '');
   }
 
   /* Altura máxima da ficha: se for maior que a tela, ela ganha rolagem interna em vez de ser cortada */
@@ -565,7 +568,7 @@ function start(PROP, CTX){
   var layerList = document.getElementById('layerList');
   (function(){
     var row = document.createElement('label'); row.className = 'layer-row'; row.style.setProperty('--layer-color', '#1f8a4c');
-    row.innerHTML = '<input type="checkbox" checked><div><div class="name">Propriedades com PIP</div><div class="desc">Limites dos imóveis (CAR/SICAR), coloridos por lote</div></div>';
+    row.innerHTML = '<input type="checkbox" checked><div><div class="name">Propriedades com PIP</div><div class="desc">Limites dos imóveis (SICAR e KML do edital), coloridos por lote</div></div>';
     row.querySelector('input').addEventListener('change', function(e){ if(e.target.checked) propGroup.addTo(map); else map.removeLayer(propGroup); });
     layerList.appendChild(row);
   })();

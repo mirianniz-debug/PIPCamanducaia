@@ -6,7 +6,7 @@ Reúne as 17 propriedades dos Lotes 1 e 2: identificação (lote e nº do PIP), 
 
 ## Dados
 
-- `data/propriedades.json` — limites dos 17 imóveis (polígonos do CAR/SICAR) com os atributos extraídos dos PIPs.
+- `data/propriedades.json` — limites dos 17 imóveis com os atributos extraídos dos PIPs. Os limites vêm do CAR/SICAR; nos PIPs 07, 14, 17 e 20 vêm do KML do edital, porque o polígono atual do SICAR não corresponde ao do PIP.
 - `data/contexto.json` — limite municipal, sub-bacia e rios do Camanducaia, APP e área de interesse do PIP.
 
 A área exibida é a informada em cada PIP. Quando o polígono do SICAR difere mais de 5% dessa área, a ficha da propriedade mostra um aviso.
