@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geoportal PIPs – Microbacia do Camanducaia</title>
+<meta name="description" content="Geoportal dos Projetos Integrais de Propriedade (PIP) da microbacia do Rio Camanducaia, em Jaguariúna/SP: propriedades, CAR, APP hídrica e ações previstas de restauração, conservação e saneamento rural.">
+
+<!-- Open Graph / WhatsApp -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://mirianniz-debug.github.io/PIPCamanducaia/">
+<meta property="og:title" content="PIPs da microbacia do Camanducaia — Geoportal">
+<meta property="og:description" content="Projetos Integrais de Propriedade (PIP) em Jaguariúna/SP: 17 propriedades, APP hídrica e ações previstas de restauração, conservação e saneamento rural.">
+<meta property="og:image" content="https://mirianniz-debug.github.io/PIPCamanducaia/preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:site_name" content="Geoportal PIPs Camanducaia">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PIPs da microbacia do Camanducaia — Geoportal">
+<meta name="twitter:description" content="Projetos Integrais de Propriedade (PIP) em Jaguariúna/SP: propriedades, CAR, APP hídrica e ações previstas.">
+<meta name="twitter:image" content="https://mirianniz-debug.github.io/PIPCamanducaia/preview.png">
+
+<link rel="icon" type="image/png" href="images/brasao.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* Mesmo sistema visual do geoportal Programa Bacias Jaguariúna (Prefeitura de Jaguariúna) */
+    --ink:#16232e;
+    --ink-soft:#48555d;
+    --paper:#eef1ea;
+    --panel:#fbfcf8;
+    --line:#d7dbcd;
+    --line-strong:#c3c8b6;
+    --header-bg:#16232e;
+    --hover:#e9ece0;
+    --lote1:#1f8a4c;        /* Lote 1 (verde) */
+    --lote1-dark:#146536;
+    --lote2:#c98a1f;        /* Lote 2 (âmbar) */
+    --lote2-dark:#8f6110;
+    --prop:#8a6d4a;
+    --earth:#c1421f;        /* limite / área de interesse (terracota) */
+    --radius:9px;
+    --font-display:'Fraunces', Georgia, 'Times New Roman', serif;
+    --font-body:'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-family: var(--font-body);
+  }
+  body.dark-mode{
+    --ink:#e6ebe3; --ink-soft:#a3ada2; --paper:#10151a; --panel:#1a2127;
+    --line:#2b343b; --line-strong:#3c4750; --header-bg:#0b1114; --hover:#232c32;
+  }
+  body.dark-mode #map{ background:var(--paper); }
+  body.dark-mode .leaflet-tile-pane{ filter: brightness(.62) contrast(.92) saturate(1.05) invert(1) hue-rotate(180deg); }
+  body.dark-mode.satellite-active .leaflet-tile-pane{ filter:none; }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;padding:0;background:var(--paper);color:var(--ink);transition:background .25s ease,color .25s ease;}
+  body{display:flex;flex-direction:column;overflow:hidden;}
+  button{font-family:inherit;}
+
+  /* ---------- Cabeçalho ---------- */
+  header{display:flex;align-items:center;gap:14px;padding:11px 20px;background:var(--header-bg);color:#eef1ea;position:relative;z-index:1000;}
+  header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;
+    background:linear-gradient(90deg,var(--lote1) 0 50%,var(--lote2) 50% 100%);}
+  header .crest{width:42px;height:42px;flex:0 0 auto;border-radius:9px;background:var(--paper);display:flex;align-items:center;justify-content:center;padding:3px;box-shadow:0 1px 4px rgba(0,0,0,.3);}
+  header .crest img{width:100%;height:100%;object-fit:contain;display:block;}
+  header .titles{display:flex;flex-direction:column;line-height:1.15;flex:1 1 auto;min-width:0;overflow:hidden;}
+  header h1{font:600 17px/1.2 var(--font-display);margin:0;letter-spacing:.2px;color:#fbfcf8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  header p{margin:3px 0 0;font:500 10.5px/1 var(--font-mono);color:#9fb3ac;text-transform:uppercase;letter-spacing:.09em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .hbtn{display:flex;align-items:center;justify-content:center;width:32px;height:32px;flex:0 0 auto;
+    background:rgba(238,241,234,.08);border:1px solid rgba(238,241,234,.28);border-radius:50%;cursor:pointer;color:#eef1ea;font:600 14px var(--font-display);}
+  .hbtn:hover{background:rgba(238,241,234,.16);}
+  .hbtn:focus-visible,.chip:focus-visible,.prop-row:focus-visible,.basemap-btn:focus-visible,#search:focus-visible,.layer-row input:focus-visible{outline:2px solid #6fcf97;outline-offset:2px;}
+  #toggleSidebar{display:none;background:rgba(238,241,234,.08);border:1px solid rgba(238,241,234,.28);color:#eef1ea;border-radius:7px;padding:7px 11px;font:500 12.5px var(--font-body);cursor:pointer;}
+
+  #app{flex:1;display:flex;min-height:0;position:relative;}
+
+  /* ---------- Painel lateral ---------- */
+  #sidebar{width:340px;flex:0 0 auto;background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:16px 16px 70px;z-index:900;}
+  .section-tick{display:flex;align-items:center;gap:8px;margin:20px 0 9px;}
+  .section-tick:first-child{margin-top:2px;}
+  .section-tick span{font:600 10.5px/1 var(--font-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);white-space:nowrap;}
+  .section-tick::after{content:"";flex:1;height:1px;background:repeating-linear-gradient(90deg,var(--line-strong) 0 4px,transparent 4px 8px);}
+  .section-caption{font:italic 400 10.5px/1.4 var(--font-body);color:var(--ink-soft);opacity:.85;margin:-4px 0 8px 2px;}
+
+  #search{width:100%;padding:9px 11px;border:1px solid var(--line-strong);border-radius:8px;background:var(--panel);color:var(--ink);font:400 13px var(--font-body);}
+  #search::placeholder{color:var(--ink-soft);opacity:.7;}
+
+  .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(--line-strong);border-radius:999px;background:var(--panel);color:var(--ink);font:500 11.5px var(--font-body);cursor:pointer;user-select:none;}
+  .chip:hover{background:var(--hover);}
+  .chip .cnt{font:500 10px var(--font-mono);color:var(--ink-soft);}
+  .chip .sw{width:10px;height:10px;border-radius:3px;display:inline-block;}
+  .chip.on{background:var(--header-bg);color:#eef1ea;border-color:var(--header-bg);}
+  .chip.on .cnt{color:#b9c9c2;}
+  #clearFilters{margin-top:10px;background:none;border:none;padding:0;color:var(--lote1-dark);font:600 12px var(--font-body);cursor:pointer;text-decoration:underline;text-underline-offset:2px;}
+  body.dark-mode #clearFilters{color:#6fcf97;}
+  #resultCount{font:500 11px var(--font-mono);color:var(--ink-soft);margin:10px 0 6px;}
+
+  #propList{display:flex;flex-direction:column;gap:2px;}
+  .prop-row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:8px 8px;border:none;background:transparent;border-radius:8px;cursor:pointer;color:var(--ink);}
+  .prop-row:hover,.prop-row.active{background:var(--hover);}
+  .prop-row .dot{width:11px;height:11px;border-radius:3px;flex:0 0 auto;border:1.5px solid rgba(0,0,0,.25);}
+  .prop-row .pr-main{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25;}
+  .prop-row .pr-id{font:600 10.5px var(--font-mono);color:var(--ink-soft);letter-spacing:.04em;}
+  .prop-row .pr-name{font:600 13px var(--font-body);}
+  .prop-row .pr-ha{font:500 11.5px var(--font-mono);color:var(--ink-soft);white-space:nowrap;}
+  #emptyMsg{display:none;padding:10px 4px;font:italic 400 12.5px var(--font-body);color:var(--ink-soft);}
+
+  .layer-row{display:flex;align-items:flex-start;gap:10px;padding:7px 8px;border-radius:8px;cursor:pointer;user-select:none;}
+  .layer-row:hover{background:var(--hover);}
+  .layer-row input[type=checkbox]{appearance:none;-webkit-appearance:none;width:17px;height:17px;margin-top:1px;flex:0 0 auto;border:1.6px solid #b7bcaa;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;background:var(--panel);}
+  .layer-row input[type=checkbox]:checked{background:var(--layer-color,var(--lote1));border-color:var(--layer-color,var(--lote1));}
+  .layer-row input[type=checkbox]:checked::after{content:"";width:5px;height:9px;border:solid white;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px);}
+  .layer-row .name{font:600 13px/1.3 var(--font-body);}
+  .layer-row .desc{font:400 11px/1.35 var(--font-body);color:var(--ink-soft);margin-top:1px;}
+
+  .basemap-row{display:flex;gap:6px;margin-top:2px;}
+  .basemap-btn{flex:1;padding:7px 4px;font:500 11.5px var(--font-body);text-align:center;border:1px solid var(--line);border-radius:7px;background:var(--panel);cursor:pointer;color:var(--ink);}
+  .basemap-btn.active{background:var(--header-bg);color:#eef1ea;border-color:var(--header-bg);}
+  #fitBtn{width:100%;margin-top:14px;padding:9px;border-radius:7px;border:1px dashed var(--line-strong);background:transparent;color:var(--lote1-dark);font:600 12.5px var(--font-body);cursor:pointer;}
+  body.dark-mode #fitBtn{color:#6fcf97;}
+  #fitBtn:hover{background:var(--hover);}
+  .sources{margin-top:16px;font:400 10px/1.5 var(--font-mono);color:var(--ink-soft);opacity:.8;}
+
+  /* ---------- Mapa ---------- */
+  #map{flex:1;min-width:0;position:relative;background:var(--paper);}
+  .leaflet-popup-content-wrapper{border-radius:10px;font-family:var(--font-body);}
+  .leaflet-popup-content{margin:12px 14px;width:min(320px,70vw) !important;}
+  .leaflet-popup-tip{background:var(--panel);}
+  .pop-id{font:600 10.5px var(--font-mono);color:#48555d;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:6px;}
+  .pop-id i{width:10px;height:10px;border-radius:3px;display:inline-block;}
+  .pop-name{font:600 16px/1.25 'Fraunces',Georgia,serif;color:#16232e;margin:3px 0 8px;padding-bottom:8px;border-bottom:1px solid #d7dbcd;}
+  .pop-row{display:flex;justify-content:space-between;gap:12px;font-size:12px;margin:4px 0;color:#16232e;}
+  .pop-row b{color:#48555d;font-weight:500;flex:0 0 auto;}
+  .pop-row .v{text-align:right;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11.5px;word-break:break-all;}
+  .pop-row .v.txt{font-family:'Inter',sans-serif;font-size:12px;word-break:normal;}
+  .pop-h{font:600 10px 'IBM Plex Mono',monospace;color:#48555d;text-transform:uppercase;letter-spacing:.09em;margin:10px 0 4px;}
+  .pop-list{margin:0;padding-left:16px;font-size:12px;line-height:1.45;color:#16232e;}
+  .pop-list li{margin:2px 0;}
+  .pop-warn{margin-top:10px;padding:7px 9px;border-radius:7px;background:#fff4dc;border:1px solid #ecd49a;font-size:11px;line-height:1.4;color:#5b4310;}
+  .pip-label{background:rgba(22,35,46,.86);color:#fff;border:0;font:600 10px 'IBM Plex Mono',monospace;padding:1px 5px;border-radius:4px;box-shadow:none;}
+  .pip-label::before{display:none;}
+  #map.hide-labels .pip-label{display:none;}
+
+  #statusbar{position:absolute;left:12px;bottom:46px;z-index:800;display:flex;align-items:center;gap:10px;background:rgba(22,35,46,.88);color:#dfe7de;font:500 11px var(--font-mono);padding:6px 11px;border-radius:7px;pointer-events:none;box-shadow:0 3px 10px rgba(0,0,0,.18);}
+  #statusbar .sep{width:1px;height:11px;background:rgba(255,255,255,.22);}
+  #statusbar .lbl{color:#8fa89f;margin-right:4px;}
+  #northArrow{position:absolute;top:14px;right:14px;z-index:800;width:34px;height:34px;background:rgba(251,252,248,.92);border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;}
+  #mapCredit{position:absolute;right:58px;bottom:14px;z-index:800;background:rgba(22,35,46,.82);color:#eef1ea;padding:6px 12px;border-radius:6px;pointer-events:none;box-shadow:0 3px 10px rgba(0,0,0,.16);text-align:right;line-height:1.35;max-width:250px;}
+  #mapCredit .cred-name{font:italic 600 10.5px var(--font-display);}
+
+  #mapOverlayLeft{position:absolute;top:14px;left:14px;z-index:800;display:flex;flex-direction:column;gap:10px;max-width:240px;}
+  .overlay-card{background:rgba(251,252,248,.95);border:1px solid var(--line);border-radius:10px;box-shadow:0 3px 12px rgba(0,0,0,.14);padding:11px 13px;color:#16232e;}
+  .overlay-card .ov-title{font:600 9.5px var(--font-mono);color:#48555d;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+  .impact-row{display:flex;gap:12px;}
+  .impact-stat{flex:1;min-width:0;}
+  .impact-stat .n{font:600 18px var(--font-mono);color:var(--lote1-dark);line-height:1;}
+  .impact-stat .l{font:500 9.5px var(--font-body);color:#48555d;line-height:1.25;margin-top:3px;}
+  .legend-row{display:flex;align-items:center;gap:8px;padding:3px 0;font:400 11.5px var(--font-body);color:#16232e;}
+  .legend-row .sw{width:14px;height:14px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;}
+  .legend-row .sw i{display:block;}
+  .sw-fill i{width:12px;height:12px;border-radius:3px;}
+  .sw-line i{width:14px;height:0;border-top:2.4px solid var(--stroke);}
+  .sw-dash i{width:14px;height:0;border-top:2.4px dashed var(--stroke);}
+
+  /* ---------- Modal "Sobre" ---------- */
+  #aboutOverlay{position:fixed;inset:0;z-index:3000;background:rgba(16,21,26,.55);display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .2s ease;}
+  #aboutOverlay.open{opacity:1;pointer-events:auto;}
+  #aboutModal{background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:580px;width:100%;max-height:86vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.35);transform:translateY(10px) scale(.98);transition:transform .22s ease;}
+  #aboutOverlay.open #aboutModal{transform:translateY(0) scale(1);}
+  .about-head{display:flex;align-items:flex-start;gap:12px;padding:22px 24px 14px;border-bottom:1px solid var(--line);}
+  .about-head .crest-sm{width:40px;height:40px;flex:0 0 auto;border-radius:8px;background:var(--paper);padding:3px;box-shadow:0 1px 4px rgba(0,0,0,.2);}
+  .about-head .crest-sm img{width:100%;height:100%;object-fit:contain;display:block;}
+  #aboutModal h2{font:600 19px/1.25 var(--font-display);color:var(--ink);margin:0 0 3px;}
+  .about-head p{font:500 11px var(--font-mono);color:var(--ink-soft);text-transform:uppercase;letter-spacing:.07em;margin:0;}
+  #aboutClose{margin-left:auto;flex:0 0 auto;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink-soft);cursor:pointer;font-size:15px;line-height:1;}
+  #aboutClose:hover{background:var(--hover);color:var(--ink);}
+  .about-body{padding:18px 24px 8px;}
+  .about-intro{font:400 13.5px/1.6 var(--font-body);color:var(--ink);margin:0 0 16px;}
+  .about-pillar{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--line);}
+  .about-pillar:first-of-type{border-top:none;padding-top:2px;}
+  .pillar-dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto;margin-top:5px;background:var(--dot,var(--lote1));}
+  .pillar-text strong{display:block;font:600 13.5px var(--font-body);color:var(--ink);margin-bottom:2px;}
+  .pillar-text span{font:400 12.5px/1.5 var(--font-body);color:var(--ink-soft);}
+  .about-note{font:400 11.5px/1.5 var(--font-body);color:var(--ink-soft);margin:6px 0 0;padding-top:12px;border-top:1px solid var(--line);}
+  .about-foot{padding:14px 24px 22px;}
+  .about-foot button{width:100%;padding:11px;border-radius:8px;border:none;background:var(--lote1);color:#fff;font:600 13px var(--font-body);cursor:pointer;}
+  .about-foot button:hover{background:var(--lote1-dark);}
+
+  #errBanner{display:none;position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:1500;background:#16232e;color:#eef1ea;padding:10px 16px;border-radius:8px;font:500 13px var(--font-body);max-width:86%;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.25);}
+
+  @media (max-width:760px){
+    header{padding:9px 12px;gap:8px;}
+    header h1{font-size:14.5px;}
+    header p{display:none;}
+    header .crest{width:34px;height:34px;}
+    .hbtn{width:28px;height:28px;}
+    #toggleSidebar{display:inline-block;padding:6px 9px;}
+    #sidebar{position:absolute;top:0;left:0;bottom:0;width:86vw;max-width:340px;transform:translateX(-100%);transition:transform .22s ease;box-shadow:6px 0 18px rgba(0,0,0,.15);}
+    #sidebar.open{transform:translateX(0);}
+    #mapOverlayLeft{width:min(225px,calc(100vw - 20px));max-width:none;top:10px;left:10px;gap:7px;}
+    .overlay-card{padding:8px 10px;}
+    .impact-stat .n{font-size:15px;}
+    .impact-stat .l{font-size:8.5px;}
+    #legendPanel{display:none;}
+    #map.popup-open #mapOverlayLeft{display:none;}
+    #statusbar{display:none;}
+    #mapCredit{bottom:34px;padding:5px 9px;max-width:190px;}
+    #mapCredit .cred-name{font-size:9.5px;}
+  }
+  @media (max-width:400px){
+    header{padding:8px 9px;gap:6px;}
+    header h1{font-size:13px;}
+    #toggleSidebar .ts-label{display:none;}
+    #mapOverlayLeft{width:min(215px,calc(100vw - 20px));}
+    #northArrow{width:28px;height:28px;top:10px;right:10px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="crest"><img src="images/brasao.png" alt="Brasão de Jaguariúna"></div>
+  <div class="titles">
+    <h1>PIPs da microbacia do Camanducaia</h1>
+    <p>Programa Bacias Jaguariúna · Departamento de Agropecuária e Meio Ambiente</p>
+  </div>
+  <button class="hbtn" id="aboutBtn" title="Sobre os PIPs" aria-label="Sobre os PIPs">i</button>
+  <button class="hbtn" id="themeToggle" title="Alternar modo escuro" aria-label="Alternar modo escuro">
+    <svg id="iconMoon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#eef1ea" stroke-width="1.6"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>
+    <svg id="iconSun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#eef1ea" stroke-width="1.6" style="display:none"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.6M12 18.9v2.6M4.6 4.6l1.85 1.85M17.55 17.55l1.85 1.85M2.5 12h2.6M18.9 12h2.6M4.6 19.4l1.85-1.85M17.55 6.45l1.85-1.85"/></svg>
+  </button>
+  <button id="toggleSidebar">☰ <span class="ts-label">Propriedades</span></button>
+</header>
+
+<div id="aboutOverlay">
+  <div id="aboutModal" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+    <div class="about-head">
+      <div class="crest-sm"><img src="images/brasao.png" alt="Brasão de Jaguariúna"></div>
+      <div>
+        <h2 id="aboutTitle">Projetos Integrais de Propriedade (PIP)</h2>
+        <p>Microbacia do Rio Camanducaia · Jaguariúna/SP</p>
+      </div>
+      <button id="aboutClose" aria-label="Fechar">✕</button>
+    </div>
+    <div class="about-body">
+      <p class="about-intro">Os PIPs reúnem o diagnóstico ambiental de cada propriedade rural participante e as ações previstas para adequá-la ambientalmente, conforme a Política de Mananciais dos Comitês PCJ (Deliberação n.º 307/2018). Este mapa apresenta 17 propriedades, em dois lotes. Clique em uma propriedade para ver a ficha completa.</p>
+      <div class="about-pillar">
+        <span class="pillar-dot" style="--dot:#1f8a4c"></span>
+        <div class="pillar-text"><strong>Restauração e conservação</strong>
+          <span>Plantio de mudas nativas, plantio por enriquecimento, sistemas agroflorestais (SAF) e condução da regeneração natural em APP, Reserva Legal e áreas comuns.</span></div>
+      </div>
+      <div class="about-pillar">
+        <span class="pillar-dot" style="--dot:#8a6d4a"></span>
+        <div class="pillar-text"><strong>Cercamento</strong>
+          <span>Proteção das áreas em restauração e das APPs contra a entrada de animais.</span></div>
+      </div>
+      <div class="about-pillar">
+        <span class="pillar-dot" style="--dot:#c98a1f"></span>
+        <div class="pillar-text"><strong>Saneamento rural</strong>
+          <span>Fossa séptica biodigestora e sistema de filtragem e cloração da água para abastecimento doméstico.</span></div>
+      </div>
+      <p class="about-note"><strong>Fontes:</strong> PIPs elaborados pela Aplicar Engenharia (2023/2024); limites dos imóveis do Cadastro Ambiental Rural (SICAR); hidrografia e APP do Programa Bacias Jaguariúna. As áreas informadas são as declaradas nos PIPs.</p>
+    </div>
+    <div class="about-foot"><button id="aboutGotIt">Explorar o mapa</button></div>
+  </div>
+</div>
+
+<div id="app">
+  <aside id="sidebar" aria-label="Painel de propriedades e camadas">
+    <div class="section-tick"><span>Buscar</span></div>
+    <input id="search" type="search" placeholder="PIP, nome da propriedade ou CAR" aria-label="Buscar propriedade" autocomplete="off">
+
+    <div class="section-tick"><span>Filtrar por lote</span></div>
+    <div class="chips" id="loteChips"></div>
+
+    <div class="section-tick"><span>Filtrar por ação prevista</span></div>
+    <div class="section-caption">Mostra as propriedades que têm qualquer uma das ações marcadas.</div>
+    <div class="chips" id="tagChips"></div>
+    <button id="clearFilters" type="button">Limpar filtros</button>
+
+    <div class="section-tick"><span>Propriedades</span></div>
+    <div id="resultCount" aria-live="polite"></div>
+    <div id="propList"></div>
+    <div id="emptyMsg">Nenhuma propriedade encontrada com esses filtros.</div>
+
+    <div class="section-tick"><span>Mapa base</span></div>
+    <div class="basemap-row">
+      <button class="basemap-btn active" data-base="street" type="button">Ruas</button>
+      <button class="basemap-btn" data-base="satellite" type="button">Satélite</button>
+      <button class="basemap-btn" data-base="terrain" type="button">Relevo</button>
+    </div>
+
+    <div class="section-tick"><span>Camadas</span></div>
+    <div id="layerList"></div>
+
+    <button id="fitBtn" type="button">⤢ Ajustar às propriedades</button>
+    <div class="sources">Fontes: PIPs (Aplicar Engenharia, 2023/2024) · Limites dos imóveis: SICAR · Hidrografia e APP: Programa Bacias Jaguariúna · Área de interesse: Edital PCJ 2018</div>
+  </aside>
+
+  <div id="map">
+    <div id="errBanner" role="alert"></div>
+    <div id="mapOverlayLeft">
+      <div class="overlay-card" id="impactPanel">
+        <div class="ov-title" id="impactTitle">Propriedades com PIP</div>
+        <div class="impact-row">
+          <div class="impact-stat"><div class="n" id="statN">—</div><div class="l">propriedades</div></div>
+          <div class="impact-stat"><div class="n" id="statHa">—</div><div class="l">hectares</div></div>
+          <div class="impact-stat"><div class="n" id="statApp">—</div><div class="l">com APP hídrica</div></div>
+        </div>
+      </div>
+      <div class="overlay-card" id="legendPanel">
+        <div class="ov-title">Legenda</div>
+        <div class="legend-row"><span class="sw sw-fill"><i style="background:#1f8a4c;border:1.4px solid #146536"></i></span>Lote 1</div>
+        <div class="legend-row"><span class="sw sw-fill"><i style="background:#c98a1f;border:1.4px solid #8f6110"></i></span>Lote 2</div>
+        <div class="legend-row"><span class="sw sw-dash" style="--stroke:#c1421f"><i></i></span>Área de interesse do PIP</div>
+        <div class="legend-row"><span class="sw sw-line" style="--stroke:#1d4ed8"><i></i></span>Rios e córregos</div>
+      </div>
+    </div>
+    <div id="northArrow"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 3 L16 15 L12 12 L8 15 Z" fill="#16232e"/><text x="12" y="23" font-size="7" text-anchor="middle" fill="#16232e" font-family="IBM Plex Mono, monospace">N</text></svg></div>
+    <div id="mapCredit"><div class="cred-name">Elaboração cartográfica: Engª Ambiental Mirian Niz</div></div>
+    <div id="statusbar">
+      <span><span class="lbl">LAT</span><span id="roLat">—</span></span><span class="sep"></span>
+      <span><span class="lbl">LON</span><span id="roLon">—</span></span><span class="sep"></span>
+      <span><span class="lbl">ZOOM</span><span id="roZoom">—</span></span>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+/* =========================================================
+   Geoportal PIPs – Microbacia do Camanducaia
+   Dados em data/propriedades.json (17 propriedades) e data/contexto.json
+   ========================================================= */
+Promise.all([
+  fetch('data/propriedades.json').then(r => { if(!r.ok) throw new Error('propriedades'); return r.json(); }),
+  fetch('data/contexto.json').then(r => { if(!r.ok) throw new Error('contexto'); return r.json(); })
+]).then(function(res){ start(res[0], res[1]); })
+  .catch(function(err){
+    console.error('Geoportal PIPs:', err);
+    var b = document.getElementById('errBanner');
+    b.textContent = 'Não foi possível carregar os dados do geoportal. Abra a página por um endereço web (não direto do arquivo) e tente novamente.';
+    b.style.display = 'block';
+  });
+
+function start(PROP, CTX){
+  var LOTE_COLOR = {1:'#1f8a4c', 2:'#c98a1f'};
+  var LOTE_DARK  = {1:'#146536', 2:'#8f6110'};
+  var TAG_ORDER = ['Plantio total','Plantio por enriquecimento','Sistema agroflorestal (SAF)','Conservação e recondução natural','Cercamento','Biodigestor','Abastecimento doméstico'];
+
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function norm(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(); }
+  function fmt(n, d){ return Number(n).toLocaleString('pt-BR', {minimumFractionDigits:d, maximumFractionDigits:d}); }
+
+  var feats = PROP.features.slice().sort(function(a,b){
+    return (a.properties.lote - b.properties.lote) || (parseInt(a.properties.pip,10) - parseInt(b.properties.pip,10));
+  });
+
+  /* ---------- Mapa e mapas base ---------- */
+  var map = L.map('map', {zoomControl:false, minZoom:8, maxZoom:19});
+  L.control.zoom({position:'bottomright'}).addTo(map);
+  L.control.scale({position:'bottomleft', imperial:false}).addTo(map);
+  var panes = {limite:410, sub:420, aoi:430, app:440, rios:450, prop:460};
+  Object.keys(panes).forEach(function(k){ map.createPane('p_'+k).style.zIndex = panes[k]; });
+
+  var basemaps = {
+    street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'&copy; OpenStreetMap contributors', maxZoom:19}),
+    satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {attribution:'Tiles &copy; Esri, Maxar, Earthstar Geographics', maxZoom:19}),
+    terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {attribution:'Map data: &copy; OpenStreetMap contributors, SRTM | &copy; OpenTopoMap', maxZoom:17})
+  };
+  basemaps.street.addTo(map);
+  document.querySelectorAll('.basemap-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.basemap-btn').forEach(function(b){ b.classList.remove('active'); map.removeLayer(basemaps[b.dataset.base]); });
+      btn.classList.add('active');
+      basemaps[btn.dataset.base].addTo(map);
+      document.body.classList.toggle('satellite-active', btn.dataset.base === 'satellite');
+    });
+  });
+
+  /* ---------- Camadas de contexto ---------- */
+  var ctxLayers = {};
+  function ctxLayer(data, style, pane){ return L.geoJSON(data, {pane:pane, style:style, interactive:false}); }
+  ctxLayers.limite = ctxLayer(CTX.LIMITE, function(){ return {color:'#c1421f', weight:3, fill:false}; }, 'p_limite');
+  ctxLayers.sub    = ctxLayer(CTX.SUBBACIA, function(){ return {color:'#0ea5e9', weight:2, fillColor:'#0ea5e9', fillOpacity:.10}; }, 'p_sub');
+  ctxLayers.aoi    = ctxLayer(CTX.AREA_INTERESSE, function(){ return {color:'#c1421f', weight:2.2, dashArray:'7 5', fill:false}; }, 'p_aoi');
+  ctxLayers.app    = ctxLayer(CTX.APP, function(){ return {color:'#d4a017', weight:1, fillColor:'#d4a017', fillOpacity:.5}; }, 'p_app');
+  ctxLayers.rios   = ctxLayer(CTX.RIOS, function(){ return {color:'#1d4ed8', weight:1.8, opacity:.9}; }, 'p_rios');
+
+  var LAYER_DEFS = [
+    {id:'aoi',   name:'Área de interesse do PIP', desc:'Microbacia do Camanducaia (Programa I – PIP, Edital PCJ 2018)', color:'#c1421f', on:true},
+    {id:'rios',  name:'Rios e córregos', desc:'Rede hidrográfica da sub-bacia do Rio Camanducaia', color:'#1d4ed8', on:true},
+    {id:'app',   name:'APP de rios e nascentes', desc:'Áreas de Preservação Permanente associadas à hidrografia', color:'#d4a017', on:false},
+    {id:'sub',   name:'Sub-bacia do Rio Camanducaia', desc:'Área de drenagem em Jaguariúna', color:'#0ea5e9', on:false},
+    {id:'limite',name:'Limite de Jaguariúna', desc:'Perímetro do município', color:'#c1421f', on:true}
+  ];
+
+  /* ---------- Propriedades ---------- */
+  var propLayers = {};            // id -> camada Leaflet
+  var darkNow = false;
+  function propStyle(f){
+    var l = f.properties.lote;
+    return {pane:'p_prop', color:LOTE_DARK[l], weight:2, fillColor:LOTE_COLOR[l], fillOpacity: darkNow ? .68 : .5};
+  }
+
+  function popupHtml(p){
+    var c = LOTE_COLOR[p.lote];
+    var rest = (p.acoes_restauracao||[]).map(function(a){ return '<li>'+esc(a)+'</li>'; }).join('');
+    var san  = (p.acoes_saneamento||[]).map(function(a){ return '<li>'+esc(a)+'</li>'; }).join('');
+    var warn = '';
+    if(Math.abs(p.dif_area_pct) > 5){
+      warn = '<div class="pop-warn"><b>Atenção:</b> o polígono do CAR no SICAR tem '+fmt(p.area_poligono_ha,2)+' ha, diferente dos '+fmt(p.area_ha,2)+' ha informados no PIP ('+(p.dif_area_pct>0?'+':'')+fmt(p.dif_area_pct,0)+'%). O mapa mostra o polígono do SICAR.</div>';
+    }
+    return '<div class="pop-id"><i style="background:'+c+'"></i>'+esc(p.id)+'</div>'
+      + '<div class="pop-name">'+esc(p.nome)+'</div>'
+      + '<div class="pop-row"><b>Área</b><span class="v">'+fmt(p.area_ha,2)+' ha</span></div>'
+      + '<div class="pop-row"><b>CAR (federal)</b><span class="v">'+esc(p.car)+'</span></div>'
+      + '<div class="pop-row"><b>APP hídrica</b><span class="v txt"><strong>'+esc(p.app_hidrica)+'</strong>'+(p.app_detalhe ? ' — '+esc(p.app_detalhe) : '')+'</span></div>'
+      + '<div class="pop-h">Ações previstas · restauração e conservação</div><ul class="pop-list">'+rest+'</ul>'
+      + '<div class="pop-h">Ações previstas · saneamento rural</div>'
+      + (san ? '<ul class="pop-list">'+san+'</ul>' : '<div style="font-size:12px;color:#48555d">Não previsto</div>')
+      + warn;
+  }
+
+  /* Altura máxima da ficha: se for maior que a tela, ela ganha rolagem interna em vez de ser cortada */
+  function popMaxH(){ return Math.max(220, Math.round(window.innerHeight * (window.innerWidth <= 760 ? 0.5 : 0.7))); }
+  map.on('popupopen',  function(){ document.getElementById('map').classList.add('popup-open'); });
+  map.on('popupclose', function(){ document.getElementById('map').classList.remove('popup-open'); });
+
+  var propGroup = L.featureGroup().addTo(map);
+  feats.forEach(function(f){
+    var lyr = L.geoJSON(f, {style: propStyle});
+    lyr.eachLayer(function(poly){
+      poly.bindPopup(popupHtml(f.properties), {maxWidth:340, maxHeight:popMaxH(), autoPanPadding:[24,24]});
+      poly.bindTooltip(f.properties.pip, {permanent:true, direction:'center', className:'pip-label'});
+      poly.on('mouseover', function(){ poly.setStyle({weight:3.4}); });
+      poly.on('mouseout',  function(){ poly.setStyle({weight:2}); });
+      poly.on('popupopen', function(){ setActive(f.properties.id); });
+      poly.on('popupclose', function(){ setActive(null); });
+      propLayers[f.properties.id] = poly;
+      propGroup.addLayer(poly);
+    });
+  });
+
+  /* ---------- Filtros ---------- */
+  var state = {lotes:{1:true, 2:true}, tags:{}, q:''};
+  var loteChips = document.getElementById('loteChips');
+  var tagChips  = document.getElementById('tagChips');
+
+  [1,2].forEach(function(l){
+    var n = feats.filter(function(f){ return f.properties.lote === l; }).length;
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip on'; b.dataset.lote = l;
+    b.innerHTML = '<span class="sw" style="background:'+LOTE_COLOR[l]+'"></span>Lote '+l+' <span class="cnt">'+n+'</span>';
+    b.addEventListener('click', function(){ state.lotes[l] = !state.lotes[l]; b.classList.toggle('on', state.lotes[l]); applyFilters(); });
+    loteChips.appendChild(b);
+  });
+  TAG_ORDER.forEach(function(t){
+    var n = feats.filter(function(f){ return f.properties.tags.indexOf(t) >= 0; }).length;
+    if(!n) return;
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.dataset.tag = t;
+    b.innerHTML = esc(t)+' <span class="cnt">'+n+'</span>';
+    b.addEventListener('click', function(){ state.tags[t] = !state.tags[t]; b.classList.toggle('on', !!state.tags[t]); applyFilters(); });
+    tagChips.appendChild(b);
+  });
+  document.getElementById('search').addEventListener('input', function(e){ state.q = norm(e.target.value.trim()); applyFilters(); });
+  document.getElementById('clearFilters').addEventListener('click', function(){
+    state = {lotes:{1:true, 2:true}, tags:{}, q:''};
+    document.getElementById('search').value = '';
+    document.querySelectorAll('#loteChips .chip').forEach(function(c){ c.classList.add('on'); });
+    document.querySelectorAll('#tagChips .chip').forEach(function(c){ c.classList.remove('on'); });
+    applyFilters();
+  });
+
+  function matches(p){
+    if(!state.lotes[p.lote]) return false;
+    var selTags = Object.keys(state.tags).filter(function(t){ return state.tags[t]; });
+    if(selTags.length && !selTags.some(function(t){ return p.tags.indexOf(t) >= 0; })) return false;
+    if(state.q){
+      var hay = norm(p.id+' pip '+p.pip+' '+p.nome+' '+p.car);
+      if(hay.indexOf(state.q) < 0) return false;
+    }
+    return true;
+  }
+
+  /* ---------- Lista lateral ---------- */
+  var listEl = document.getElementById('propList');
+  feats.forEach(function(f){
+    var p = f.properties;
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'prop-row'; b.dataset.id = p.id;
+    b.innerHTML = '<span class="dot" style="background:'+LOTE_COLOR[p.lote]+'"></span>'
+      + '<span class="pr-main"><span class="pr-id">'+esc(p.id)+'</span><span class="pr-name">'+esc(p.nome)+'</span></span>'
+      + '<span class="pr-ha">'+fmt(p.area_ha,2)+' ha</span>';
+    b.addEventListener('click', function(){ focusProp(p.id); });
+    listEl.appendChild(b);
+  });
+  function setActive(id){
+    document.querySelectorAll('.prop-row').forEach(function(r){ r.classList.toggle('active', r.dataset.id === id); });
+  }
+  function focusProp(id){
+    var lyr = propLayers[id]; if(!lyr) return;
+    if(!propGroup.hasLayer(lyr)) return;
+    /* sem animação: assim o mapa já está no lugar final quando a ficha abre e o ajuste automático da ficha funciona */
+    map.fitBounds(lyr.getBounds(), {maxZoom:16, padding:[50,50], animate:false});
+    lyr.openPopup();
+    if(window.innerWidth <= 760) document.getElementById('sidebar').classList.remove('open');
+  }
+
+  var unionBounds = null;
+  function applyFilters(){
+    var vis = [];
+    feats.forEach(function(f){
+      var lyr = propLayers[f.properties.id];
+      var ok = matches(f.properties);
+      if(ok){ if(!propGroup.hasLayer(lyr)) propGroup.addLayer(lyr); vis.push(f.properties); }
+      else if(propGroup.hasLayer(lyr)){ lyr.closePopup(); propGroup.removeLayer(lyr); }
+    });
+    document.querySelectorAll('.prop-row').forEach(function(r){
+      var f = feats.filter(function(x){ return x.properties.id === r.dataset.id; })[0];
+      r.style.display = matches(f.properties) ? '' : 'none';
+    });
+    document.getElementById('emptyMsg').style.display = vis.length ? 'none' : 'block';
+    document.getElementById('resultCount').textContent = 'Mostrando ' + vis.length + ' de ' + feats.length + ' propriedades';
+    var anyFilter = !(state.lotes[1] && state.lotes[2]) || Object.keys(state.tags).some(function(t){ return state.tags[t]; }) || state.q;
+    document.getElementById('clearFilters').style.visibility = anyFilter ? 'visible' : 'hidden';
+    document.getElementById('impactTitle').textContent = anyFilter ? 'Propriedades filtradas' : 'Propriedades com PIP';
+    document.getElementById('statN').textContent = vis.length;
+    document.getElementById('statHa').textContent = fmt(vis.reduce(function(s,p){ return s + p.area_ha; }, 0), 0);
+    document.getElementById('statApp').textContent = vis.filter(function(p){ return p.app_hidrica === 'SIM'; }).length;
+    if(anyFilter && vis.length){ map.fitBounds(propGroup.getBounds(), {padding:[50,50], maxZoom:15}); }
+  }
+
+  /* ---------- Painel de camadas ---------- */
+  var layerList = document.getElementById('layerList');
+  (function(){
+    var row = document.createElement('label'); row.className = 'layer-row'; row.style.setProperty('--layer-color', '#1f8a4c');
+    row.innerHTML = '<input type="checkbox" checked><div><div class="name">Propriedades com PIP</div><div class="desc">Limites dos imóveis (CAR/SICAR), coloridos por lote</div></div>';
+    row.querySelector('input').addEventListener('change', function(e){ if(e.target.checked) propGroup.addTo(map); else map.removeLayer(propGroup); });
+    layerList.appendChild(row);
+  })();
+  LAYER_DEFS.forEach(function(def){
+    var row = document.createElement('label'); row.className = 'layer-row'; row.style.setProperty('--layer-color', def.color);
+    row.innerHTML = '<input type="checkbox" '+(def.on?'checked':'')+'><div><div class="name">'+esc(def.name)+'</div><div class="desc">'+esc(def.desc)+'</div></div>';
+    row.querySelector('input').addEventListener('change', function(e){ if(e.target.checked) ctxLayers[def.id].addTo(map); else map.removeLayer(ctxLayers[def.id]); });
+    layerList.appendChild(row);
+    if(def.on) ctxLayers[def.id].addTo(map);
+  });
+
+  /* ---------- Tema (claro/escuro) ---------- */
+  function applyTheme(dark){
+    darkNow = dark;
+    document.body.classList.toggle('dark-mode', dark);
+    document.getElementById('iconMoon').style.display = dark ? 'none' : 'block';
+    document.getElementById('iconSun').style.display  = dark ? 'block' : 'none';
+    try{ localStorage.setItem('geoportal-theme', dark ? 'dark' : 'light'); }catch(e){}
+    Object.keys(propLayers).forEach(function(id){ propLayers[id].setStyle({fillOpacity: dark ? .68 : .5}); });
+  }
+  var saved = null; try{ saved = localStorage.getItem('geoportal-theme'); }catch(e){}
+  var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(saved ? saved === 'dark' : prefersDark);
+  document.getElementById('themeToggle').addEventListener('click', function(){ applyTheme(!document.body.classList.contains('dark-mode')); });
+
+  /* ---------- Vista inicial, rótulos, barra de status ---------- */
+  unionBounds = propGroup.getBounds();
+  map.fitBounds(unionBounds, {padding:[40,40]});
+  document.getElementById('fitBtn').addEventListener('click', function(){
+    map.fitBounds(propGroup.getLayers().length ? propGroup.getBounds() : unionBounds, {padding:[40,40]});
+  });
+  var mapEl = document.getElementById('map');
+  function updateLabels(){ mapEl.classList.toggle('hide-labels', map.getZoom() < 12); document.getElementById('roZoom').textContent = map.getZoom(); }
+  map.on('zoomend', updateLabels); updateLabels();
+  map.on('mousemove', function(e){
+    document.getElementById('roLat').textContent = e.latlng.lat.toFixed(5) + '°';
+    document.getElementById('roLon').textContent = e.latlng.lng.toFixed(5) + '°';
+  });
+
+  var sidebar = document.getElementById('sidebar');
+  document.getElementById('toggleSidebar').addEventListener('click', function(){ sidebar.classList.toggle('open'); });
+  map.on('click', function(){ if(window.innerWidth <= 760) sidebar.classList.remove('open'); });
+
+  applyFilters();
+
+  /* ---------- Modal "Sobre" ---------- */
+  var aboutOverlay = document.getElementById('aboutOverlay');
+  function openAbout(){ aboutOverlay.classList.add('open'); document.getElementById('aboutGotIt').focus(); }
+  function closeAbout(){ aboutOverlay.classList.remove('open'); }
+  document.getElementById('aboutBtn').addEventListener('click', openAbout);
+  document.getElementById('aboutClose').addEventListener('click', closeAbout);
+  document.getElementById('aboutGotIt').addEventListener('click', closeAbout);
+  aboutOverlay.addEventListener('click', function(e){ if(e.target === aboutOverlay) closeAbout(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeAbout(); });
+  try{
+    if(!sessionStorage.getItem('pip_about_seen')){ openAbout(); sessionStorage.setItem('pip_about_seen', '1'); }
+  }catch(e){ openAbout(); }
+}
+</script>
+</body>
+</html>
